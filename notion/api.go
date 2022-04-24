@@ -15,15 +15,6 @@ type Client struct {
 	httpClient *http.Client
 }
 
-
-type Item struct {
-	Properties struct {
-		Frequency struct {
-				Number int `json:"number"`
-		} `json:"Frequency"`
-	} `json:"properties"`
-}
-
 type Page struct {
 	Object         string    `json:"object"`
 	ID             string    `json:"id"`
@@ -229,12 +220,10 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 	return &page, nil
 }
 
-func (c *Client) UpdatePage(pageId string, item *Item) (error) {
-	itemJson, _ := json.Marshal(item)
+func (c *Client) UpdatePage(pageId string, json string) (error) {
+	// fmt.Printf("itemJson = %s", json)
 
-	// fmt.Printf("itemJson = %s", itemJson)
-
-	req, err := c.newRequest(http.MethodPatch, "/pages/" + pageId, bytes.NewBuffer([]byte(itemJson)))
+	req, err := c.newRequest(http.MethodPatch, "/pages/" + pageId, bytes.NewBuffer([]byte(json)))
 	if err != nil {
 		return err
 	}
@@ -246,3 +235,4 @@ func (c *Client) UpdatePage(pageId string, item *Item) (error) {
 	defer res.Body.Close()
 	return nil
 }
+

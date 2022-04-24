@@ -21,11 +21,11 @@ func TestClient_GetPage(t *testing.T) {
 		{
 			name: "normal",
 			args: args{
-				pageId: "25ec2f4cdb444dc6aee5ebab57d5cd91",
+				pageId: "36ad047fbf4d41879eb90cc028ea7074",
 			},
 			want: page{
 				Object: "page",
-				Id:     "25ec2f4cdb444dc6aee5ebab57d5cd91",
+				Id:     "36ad047fbf4d41879eb90cc028ea7074",
 			},
 			wantErr: false,
 		},
@@ -50,7 +50,7 @@ func TestClient_GetPage(t *testing.T) {
 func TestClient_UpdatePage(t *testing.T) {
 	type args struct {
 		pageId string
-		item   *Item
+		json   string
 	}
 	tests := []struct {
 		name    string
@@ -61,19 +61,22 @@ func TestClient_UpdatePage(t *testing.T) {
 			name: "normal",
 			args: args{
 				pageId: "36ad047fbf4d41879eb90cc028ea7074",
-				item: &Item{
-					Properties: struct {
-						Frequency struct {
-							Number int "json:\"number\""
-						} "json:\"Frequency\""
-					}{
-						Frequency: struct {
-							Number int "json:\"number\""
-						}{
-							Number: 0,
+				json: `{
+					"properties": {
+						"Frequency": {
+							"number": 9
 						},
-					},
-				},
+						"Meaning": {
+							"rich_text": [
+								{
+									"text": {
+										"content": "hoge"
+									}
+								}
+							]
+						}
+					} 
+				}`,
 			},
 			wantErr: false,
 		},
@@ -81,7 +84,7 @@ func TestClient_UpdatePage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			if err := c.UpdatePage(tt.args.pageId, tt.args.item); (err != nil) != tt.wantErr {
+			if err := c.UpdatePage(tt.args.pageId, tt.args.json); (err != nil) != tt.wantErr {
 				t.Errorf("Client.UpdatePage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
