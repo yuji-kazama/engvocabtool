@@ -63,16 +63,16 @@ func TestClient_UpdatePage(t *testing.T) {
 				pageId: "36ad047fbf4d41879eb90cc028ea7074",
 				item: &Item{
 					Properties: struct {
-								Frequency struct {
-									Number int "json:\"number\""
-								} "json:\"Frequency\""
-							}{
-								Frequency: struct {
-									Number int "json:\"number\""
-								}{
-									Number: 0,
-								},
-							},
+						Frequency struct {
+							Number int "json:\"number\""
+						} "json:\"Frequency\""
+					}{
+						Frequency: struct {
+							Number int "json:\"number\""
+						}{
+							Number: 0,
+						},
+					},
 				},
 			},
 			wantErr: false,
