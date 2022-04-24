@@ -133,3 +133,35 @@ func TestClient_PostPage(t *testing.T) {
 		})
 	}
 }
+
+func TestClient_GetAllPages(t *testing.T) {
+	type result struct {
+		Object string
+	}
+	tests := []struct {
+		name    string
+		want    result
+		wantErr bool
+	}{
+		{
+			name: "normal",
+			want: result{
+				Object: "list",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewClient()
+			got, err := c.GetAllPages()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Client.GetAllPages() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got.Object != tt.want.Object {
+				t.Errorf("Client.GetAllPages() = %v, want %v", got, tt.want)
+		}
+		})
+	}
+}
