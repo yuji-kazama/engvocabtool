@@ -1,6 +1,7 @@
 package notion
 
 import (
+	"os"
 	"testing"
 )
 
@@ -86,6 +87,48 @@ func TestClient_UpdatePage(t *testing.T) {
 			c := NewClient()
 			if err := c.UpdatePage(tt.args.pageId, tt.args.json); (err != nil) != tt.wantErr {
 				t.Errorf("Client.UpdatePage() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestClient_PostPage(t *testing.T) {
+	type args struct {
+		json string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "normal",
+			args: args{
+				json: `{
+					"parent": {
+						"database_id": "` + os.Getenv("NOTION_DATABASE_ID") + `"
+					},
+					"properties": {
+						"Name": {
+							"title": [
+								{
+									"text": {
+										"content": "This is test from API"
+									}
+								}
+							]
+						}
+					} 
+				}`,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewClient()
+			if err := c.PostPage(tt.args.json); (err != nil) != tt.wantErr {
+				t.Errorf("Client.PostPage() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

@@ -184,11 +184,9 @@ func (c *Client) newRequest(method, spath string, body io.Reader) (*http.Request
 	if err != nil {
 		return nil, err
 	}
-
 	req.Header.Set("Authorization", "Bearer " + os.Getenv("NOTION_INTEGRATION_TOKEN"))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Notion-Version", "2021-05-13")
-
 	return req, nil
 }
 
@@ -197,21 +195,19 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("request error: %v", res)
+	}
 	defer res.Body.Close()
-
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println("Read Error:", err)
 		return nil, err
 	}
-	fmt.Print(string(body))
-
 	var page Page
 	if err := json.Unmarshal(body, &page); err != nil {
 		fmt.Printf("Can not unmarshal JSON: %v", err)
@@ -222,17 +218,34 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 
 func (c *Client) UpdatePage(pageId string, json string) (error) {
 	// fmt.Printf("itemJson = %s", json)
-
 	req, err := c.newRequest(http.MethodPatch, "/pages/" + pageId, bytes.NewBuffer([]byte(json)))
 	if err != nil {
 		return err
 	}
-
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
+	}
+	if res.StatusCode != 200 {
+		return fmt.Errorf("request error: %v", res)
 	}
 	defer res.Body.Close()
 	return nil
 }
 
+func (c *Client) PostPage(json string) (error) {
+	// fmt.Printf("itemJson = %s", json)
+	req, err := c.newRequest(http.MethodPost, "/pages", bytes.NewBuffer(([]byte(json))))
+	if err != nil {
+		return err
+	}
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 200 {
+		return fmt.Errorf("request error: %v", res)
+	}
+	defer res.Body.Close()
+	return nil
+}
