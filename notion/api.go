@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 )
 
 type Client struct {
@@ -16,8 +15,13 @@ type Client struct {
 	httpClient *http.Client
 }
 
+
 type Item struct {
-	Frequency string
+	Properties struct {
+		Frequency struct {
+				Number int `json:"number"`
+		} `json:"Frequency"`
+	} `json:"properties"`
 }
 
 type Page struct {
@@ -226,17 +230,9 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 }
 
 func (c *Client) UpdatePage(pageId string, item *Item) (error) {
-	var itemJson = `{
-		"properties": {
-			"Frequency": {
-				"number": ${FREQUENCY}
-			}
-		}
-	}`
+	itemJson, _ := json.Marshal(item)
 
-	itemJson = strings.Replace(string(itemJson), "${FREQUENCY}", item.Frequency, -1)
-
-	fmt.Println(itemJson)
+	// fmt.Printf("itemJson = %s", itemJson)
 
 	req, err := c.newRequest(http.MethodPatch, "/pages/" + pageId, bytes.NewBuffer([]byte(itemJson)))
 	if err != nil {
