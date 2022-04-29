@@ -45,7 +45,7 @@ func NewAddCmd() *cobra.Command {
 
 			json := createPostJson(res)
 			// fmt.Println(json)
-			pr, err := nc.PostPage(json)
+			pr, err := nc.CreatePage(json)
 			if err != nil {
 				return err
 			}
@@ -53,6 +53,8 @@ func NewAddCmd() *cobra.Command {
 			cmd.Println(pr.URL)
 			return nil
 		},
+		SilenceErrors: true,
+		SilenceUsage: true,
 	}
 	return cmd
 }

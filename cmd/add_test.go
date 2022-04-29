@@ -12,9 +12,9 @@ import (
 
 func TestNewAddCmd(t *testing.T) {
 	tests := []struct {
-		name string
-		args []string
-		want string
+		name    string
+		args    []string
+		want    string
 		wantErr bool
 	}{
 		{
@@ -23,18 +23,24 @@ func TestNewAddCmd(t *testing.T) {
 			want: "Success: word has been added",
 			wantErr: false,
 		},
-		// {
-		// 	name: "no arg",
-		// 	args: []string{"add"},
-		// 	want: "accepts 1 arg(s), received 0",
-		// 	wantErr: true,
-		// },
-		// {
-		// 	name: "already added",
-		// 	args: []string{"add", "test"},
-		// 	want: "already exists",
-		// 	wantErr: true,
-		// },
+		{
+			name: "no arg",
+			args: []string{"add"},
+			want: "accepts 1 arg(s), received 0",
+			wantErr: true,
+		},
+		{
+			name: "already added",
+			args: []string{"add", "test"},
+			want: "already exists",
+			wantErr: true,
+		},
+		{
+			name:    "no definition",
+			args:    []string{"add", "hogaegae"},
+			want:    "no matching word was found",
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -56,7 +62,7 @@ func TestNewAddCmd(t *testing.T) {
 			if !strings.HasPrefix(got, tt.want) {
 				t.Errorf("unexpected response: want = %v, got = %v", tt.want, got)
 			}
-			
+
 		})
 	}
 }

@@ -125,9 +125,12 @@ func TestClient_UpdatePage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			if err := c.UpdatePage(tt.args.pageId, tt.args.json); (err != nil) != tt.wantErr {
+			got, err := c.UpdatePage(tt.args.pageId, tt.args.json)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("Client.UpdatePage() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
+			t.Log(got.URL)
 		})
 	}
 }
@@ -153,7 +156,7 @@ func TestClient_PostPage(t *testing.T) {
 							"title": [
 								{
 									"text": {
-										"content": "This is test from API"
+										"content": "TEST_FROM_API"
 									}
 								}
 							]
@@ -167,7 +170,7 @@ func TestClient_PostPage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			got, err := c.PostPage(tt.args.json)
+			got, err := c.CreatePage(tt.args.json)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Client.PostPage() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -178,12 +181,8 @@ func TestClient_PostPage(t *testing.T) {
 }
 
 func TestClient_GetAllPages(t *testing.T) {
-	type result struct {
-		Object string
-	}
 	tests := []struct {
 		name    string
-		want    result
 		wantErr bool
 	}{
 		{
@@ -199,9 +198,7 @@ func TestClient_GetAllPages(t *testing.T) {
 				t.Errorf("Client.GetAllPages() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got.Object != tt.want.Object {
-				t.Errorf("Client.GetAllPages() = %v, want %v", got, tt.want)
-			}
+			t.Logf("Object = %v", got.Object)
 		})
 	}
 }
@@ -238,7 +235,7 @@ func TestClient_GetPageByName(t *testing.T) {
 				t.Errorf("Client.GetPageByName() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			t.Logf("Result: %v", got.Results)
+			t.Logf("Result = %v", got.Results)
 		})
 	}
 }

@@ -53,6 +53,9 @@ func (c *Client) GetEverything(word string) (*AllResults, error) {
 	if err != nil {
 		return nil, err
 	}
+	if res.StatusCode == 404 {
+		return nil, fmt.Errorf("no matching word was found")
+	}
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("request error: %v", res)
 	}

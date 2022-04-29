@@ -171,7 +171,7 @@ type Page struct {
 	URL string `json:"url"`
 }
 
-type PostResult struct {
+type CreateResult struct {
 	Object         string    `json:"object"`
 	ID             string    `json:"id"`
 	URL string `json:"url"`
@@ -368,7 +368,7 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 		fmt.Println("Read Error:", err)
 		return nil, err
 	}
-	fmt.Print(string(body))
+	// fmt.Print(string(body))
 	var page Page
 	if err := json.Unmarshal(body, &page); err != nil {
 		fmt.Printf("Can not unmarshal JSON: %v", err)
@@ -377,26 +377,23 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 	return &page, nil
 }
 
-func (c *Client) UpdatePage(pageId string, json string) error {
-	// fmt.Printf("itemJson = %s", json)
-	req, err := c.newRequest(http.MethodPatch, "/pages/" + pageId, bytes.NewBuffer([]byte(json)))
-	if err != nil {
-		return err
-	}
-	res, err := c.httpClient.Do(req)
-	if verifyResponse(res, err) != nil {
-		return err
-	}
-	defer res.Body.Close()
-	return nil
-}
-
-func (c *Client) PostPage(param string) (*PostResult, error) {
-	// fmt.Printf("itemJson = %s", json)
-	req, err := c.newRequest(http.MethodPost, "/pages", bytes.NewBuffer(([]byte(param))))
+func (c *Client) UpdatePage(pageId string, data string) (*CreateResult, error) {
+	req, err := c.newRequest(http.MethodPatch, "/pages/" + pageId, bytes.NewBuffer([]byte(data)))
 	if err != nil {
 		return nil, err
 	}
+	return doRequest(c, req)
+}
+
+func (c *Client) CreatePage(data string) (*CreateResult, error) {
+	req, err := c.newRequest(http.MethodPost, "/pages", bytes.NewBuffer(([]byte(data))))
+	if err != nil {
+		return nil, err
+	}
+	return doRequest(c, req)
+}
+
+func doRequest(c *Client, req *http.Request) (*CreateResult, error) {
 	res, err := c.httpClient.Do(req)
 	if verifyResponse(res, err) != nil {
 		return nil, err
@@ -407,8 +404,7 @@ func (c *Client) PostPage(param string) (*PostResult, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	var result PostResult
+	var result CreateResult
 	if err := json.Unmarshal(body, &result); err != nil {
 		fmt.Printf("cannot unmarshal json: %v", err)
 		return nil, err
@@ -425,37 +421,7 @@ func (c *Client) GetAllPages() (*SearchResult, error) {
 			}
 		}
 	}`
-	req, err := c.newRequest(
-		http.MethodPost,
-		"/databases/"+os.Getenv("NOTION_DATABASE_ID")+"/query",
-		bytes.NewBuffer([]byte(query)))
-	if err != nil {
-		return nil, err
-	}
-	res, err := c.httpClient.Do(req)
-	if verifyResponse(res, err) != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	// fmt.Print(string(body))
-
-	var result SearchResult
-	if err := json.Unmarshal(body, &result); err != nil {
-		fmt.Printf("cannot unmarshal json: %v", err)
-		return nil, err
-	}
-	return &result, nil
-
-}
-
-func (c *Client) Exist(name string) bool {
-	res, _ := c.GetPageByName(name)
-	return len(res.Results) > 0
+	return search(c, query)
 }
 
 func (c *Client) GetPageByName(name string) (*SearchResult, error) {
@@ -467,9 +433,13 @@ func (c *Client) GetPageByName(name string) (*SearchResult, error) {
 			}
 		}
 	}`
+	return search(c, query)
+}
+
+func search(c *Client, query string) (*SearchResult, error) {
 	req, err := c.newRequest(
 		http.MethodPost,
-		"/databases/"+os.Getenv("NOTION_DATABASE_ID")+"/query",
+		"/databases/" + os.Getenv("NOTION_DATABASE_ID") + "/query",
 		bytes.NewBuffer([]byte(query)))
 	if err != nil {
 		return nil, err
@@ -484,7 +454,6 @@ func (c *Client) GetPageByName(name string) (*SearchResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	// fmt.Print(string(body))
 
 	var result SearchResult
 	if err := json.Unmarshal(body, &result); err != nil {
@@ -492,6 +461,11 @@ func (c *Client) GetPageByName(name string) (*SearchResult, error) {
 		return nil, err
 	}
 	return &result, nil
+}
+
+func (c *Client) Exist(name string) bool {
+	res, _ := c.GetPageByName(name)
+	return len(res.Results) > 0
 }
 
 func verifyResponse(res *http.Response, err error) (error) {
