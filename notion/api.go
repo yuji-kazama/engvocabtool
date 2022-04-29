@@ -436,6 +436,11 @@ func (c *Client) GetAllPages() (*SearchResult, error) {
 
 }
 
+func (c *Client) Exist(name string) bool {
+	res, _ := c.GetPageByName(name)
+	return len(res.Results) > 0
+}
+
 func (c *Client) GetPageByName(name string) (*SearchResult, error) {
 	query := `{
 		"filter": {

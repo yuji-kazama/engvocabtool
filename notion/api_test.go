@@ -184,7 +184,7 @@ func TestClient_GetAllPages(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "normal",
+			name:    "normal",
 			wantErr: false,
 		},
 	}
@@ -219,6 +219,13 @@ func TestClient_GetPageByName(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "not exist",
+			args: args{
+				name: "afjawifaiwe",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -229,6 +236,33 @@ func TestClient_GetPageByName(t *testing.T) {
 				return
 			}
 			t.Logf("Result: %v", got.Results)
+		})
+	}
+}
+
+func TestClient_Exist(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name   string
+		args   args
+		want   bool
+	}{
+		{
+			name: "not exist",
+			args: args{
+				name: "afjawifaiwe",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewClient()
+			if got := c.Exist(tt.args.name); got != tt.want {
+				t.Errorf("Client.Exist() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
