@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -30,8 +31,8 @@ func TestNewAddCmd(t *testing.T) {
 		// },
 		// {
 		// 	name: "already added",
-		// 	args: []string{"add test"},
-		// 	want: "TODO",
+		// 	args: []string{"add", "test"},
+		// 	want: "already exists",
 		// 	wantErr: true,
 		// },
 	}
@@ -52,7 +53,7 @@ func TestNewAddCmd(t *testing.T) {
 			}
 
 			got := buf.String()
-			if tt.want != got {
+			if !strings.HasPrefix(got, tt.want) {
 				t.Errorf("unexpected response: want = %v, got = %v", tt.want, got)
 			}
 			

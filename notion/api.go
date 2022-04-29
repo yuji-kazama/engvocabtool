@@ -171,6 +171,12 @@ type Page struct {
 	URL string `json:"url"`
 }
 
+type PostResult struct {
+	Object         string    `json:"object"`
+	ID             string    `json:"id"`
+	URL string `json:"url"`
+}
+
 type SearchResult struct {
 	Object  string `json:"object"`
 	Results []struct {
@@ -385,18 +391,29 @@ func (c *Client) UpdatePage(pageId string, json string) error {
 	return nil
 }
 
-func (c *Client) PostPage(json string) error {
+func (c *Client) PostPage(param string) (*PostResult, error) {
 	// fmt.Printf("itemJson = %s", json)
-	req, err := c.newRequest(http.MethodPost, "/pages", bytes.NewBuffer(([]byte(json))))
+	req, err := c.newRequest(http.MethodPost, "/pages", bytes.NewBuffer(([]byte(param))))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	res, err := c.httpClient.Do(req)
 	if verifyResponse(res, err) != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
-	return nil
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var result PostResult
+	if err := json.Unmarshal(body, &result); err != nil {
+		fmt.Printf("cannot unmarshal json: %v", err)
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (c *Client) GetAllPages() (*SearchResult, error) {

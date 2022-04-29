@@ -167,9 +167,12 @@ func TestClient_PostPage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			if err := c.PostPage(tt.args.json); (err != nil) != tt.wantErr {
+			got, err := c.PostPage(tt.args.json)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("Client.PostPage() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
+			t.Log(got.URL)
 		})
 	}
 }

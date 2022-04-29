@@ -31,22 +31,26 @@ func NewAddCmd() *cobra.Command {
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			word := args[0]
+			nc := notion.NewClient()
+
+			if nc.Exist(word) {
+				return fmt.Errorf("already exists")
+			}
+
 			wc := words.NewClient()
 			res, err := wc.GetEverything(word)
 			if err != nil {
 				return err
 			}
 
-			nc := notion.NewClient()
 			json := createPostJson(res)
-
-			fmt.Println(json)
-
-			if err := nc.PostPage(json); err != nil {
+			// fmt.Println(json)
+			pr, err := nc.PostPage(json)
+			if err != nil {
 				return err
 			}
-
 			cmd.Println("Success: word has been added")
+			cmd.Println(pr.URL)
 			return nil
 		},
 	}
