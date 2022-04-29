@@ -20,18 +20,8 @@ type AllResults struct {
 		Definition   string   `json:"definition"`
 		PartOfSpeech string   `json:"partOfSpeech"`
 		Synonyms     []string `json:"synonyms,omitempty"`
-		TypeOf       []string `json:"typeOf"`
-		MemberOf     []string `json:"memberOf,omitempty"`
-		HasTypes     []string `json:"hasTypes,omitempty"`
-		PartOf       []string `json:"partOf,omitempty"`
+		Examples     []string `json:"examples,omitempty"`
 	} `json:"results"`
-	Syllables struct {
-		Count int      `json:"count"`
-		List  []string `json:"list"`
-	} `json:"syllables"`
-	Pronunciation struct {
-		All string `json:"all"`
-	} `json:"pronunciation"`
 	Frequency float64 `json:"frequency"`
 }
 
