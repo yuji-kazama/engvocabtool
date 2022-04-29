@@ -353,11 +353,8 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 		return nil, err
 	}
 	res, err := c.httpClient.Do(req)
-	if err != nil {
+	if verifyResponse(res, err) != nil {
 		return nil, err
-	}
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("request error: %v", res)
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
@@ -365,6 +362,7 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 		fmt.Println("Read Error:", err)
 		return nil, err
 	}
+	fmt.Print(string(body))
 	var page Page
 	if err := json.Unmarshal(body, &page); err != nil {
 		fmt.Printf("Can not unmarshal JSON: %v", err)
@@ -375,16 +373,13 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 
 func (c *Client) UpdatePage(pageId string, json string) error {
 	// fmt.Printf("itemJson = %s", json)
-	req, err := c.newRequest(http.MethodPatch, "/pages/"+pageId, bytes.NewBuffer([]byte(json)))
+	req, err := c.newRequest(http.MethodPatch, "/pages/" + pageId, bytes.NewBuffer([]byte(json)))
 	if err != nil {
 		return err
 	}
 	res, err := c.httpClient.Do(req)
-	if err != nil {
+	if verifyResponse(res, err) != nil {
 		return err
-	}
-	if res.StatusCode != 200 {
-		return fmt.Errorf("request error: %v", res)
 	}
 	defer res.Body.Close()
 	return nil
@@ -397,11 +392,8 @@ func (c *Client) PostPage(json string) error {
 		return err
 	}
 	res, err := c.httpClient.Do(req)
-	if err != nil {
+	if verifyResponse(res, err) != nil {
 		return err
-	}
-	if res.StatusCode != 200 {
-		return fmt.Errorf("request error: %v", res)
 	}
 	defer res.Body.Close()
 	return nil
@@ -424,11 +416,8 @@ func (c *Client) GetAllPages() (*SearchResult, error) {
 		return nil, err
 	}
 	res, err := c.httpClient.Do(req)
-	if err != nil {
+	if verifyResponse(res, err) != nil {
 		return nil, err
-	}
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("request error: %v", res)
 	}
 	defer res.Body.Close()
 
@@ -436,7 +425,7 @@ func (c *Client) GetAllPages() (*SearchResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Print(string(body))
+	// fmt.Print(string(body))
 
 	var result SearchResult
 	if err := json.Unmarshal(body, &result); err != nil {
@@ -445,4 +434,50 @@ func (c *Client) GetAllPages() (*SearchResult, error) {
 	}
 	return &result, nil
 
+}
+
+func (c *Client) GetPageByName(name string) (*SearchResult, error) {
+	query := `{
+		"filter": {
+			"property": "Name",
+			"title": {
+				"equals": "`+ name + `"
+			}
+		}
+	}`
+	req, err := c.newRequest(
+		http.MethodPost,
+		"/databases/"+os.Getenv("NOTION_DATABASE_ID")+"/query",
+		bytes.NewBuffer([]byte(query)))
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.httpClient.Do(req)
+	if verifyResponse(res, err) != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	// fmt.Print(string(body))
+
+	var result SearchResult
+	if err := json.Unmarshal(body, &result); err != nil {
+		fmt.Printf("cannot unmarshal json: %v", err)
+		return nil, err
+	}
+	return &result, nil
+}
+
+func verifyResponse(res *http.Response, err error) (error) {
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 200 {
+		return fmt.Errorf("request error: %v", res)
+	}
+	return nil
 }

@@ -64,14 +64,54 @@ func TestClient_UpdatePage(t *testing.T) {
 				pageId: "36ad047fbf4d41879eb90cc028ea7074",
 				json: `{
 					"properties": {
+						"Status": {
+							"select": {
+								"name": "2: Recognized"
+							}
+						},
+						"Check Num": {
+							"select": {
+								"name": "1"
+							}
+						},
+						"Study Date": {
+							"date": {
+								"start": "2022-04-09",
+								"end": null,
+								"time_zone": null
+							}
+						},
+						"Class": {
+							"select": {
+								"name": "Adjective"
+							}
+						},
 						"Frequency": {
-							"number": 9
+							"number": 4
 						},
 						"Meaning": {
 							"rich_text": [
 								{
 									"text": {
-										"content": "hoge"
+										"content": "updated"
+									}
+								}
+							]
+						},
+						"Sentence": {
+							"rich_text": [
+								{
+									"text": {
+										"content": "updated"
+									}
+								}
+							]
+						},
+						"Note": {
+							"rich_text": [
+								{
+									"text": {
+										"content": "updated"
 									}
 								}
 							]
@@ -145,9 +185,6 @@ func TestClient_GetAllPages(t *testing.T) {
 	}{
 		{
 			name: "normal",
-			want: result{
-				Object: "list",
-			},
 			wantErr: false,
 		},
 	}
@@ -161,7 +198,37 @@ func TestClient_GetAllPages(t *testing.T) {
 			}
 			if got.Object != tt.want.Object {
 				t.Errorf("Client.GetAllPages() = %v, want %v", got, tt.want)
-		}
+			}
+		})
+	}
+}
+
+func TestClient_GetPageByName(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "normal",
+			args: args{
+				name: "test",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewClient()
+			got, err := c.GetPageByName(tt.args.name)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Client.GetPageByName() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			t.Logf("Result: %v", got.Results)
 		})
 	}
 }

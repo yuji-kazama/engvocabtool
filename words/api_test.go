@@ -20,6 +20,13 @@ func TestClient_GetEverything(t *testing.T) {
 			},
 			wantErr: false, 
 		},
+		{
+			name: "unknown",
+			args: args {
+				word: "awhoefiuawef",
+			},
+			wantErr: true, 
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -29,8 +36,10 @@ func TestClient_GetEverything(t *testing.T) {
 				t.Errorf("Client.GetEverything() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			t.Logf("Word: %v", got.Word)
-			t.Logf("Frequency: %v", got.Frequency)
+			if got != nil {
+				t.Logf("Word: %v", got.Word)
+				t.Logf("Frequency: %v", got.Frequency)
+			}
 		})
 	}
 }
