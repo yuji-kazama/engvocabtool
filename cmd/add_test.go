@@ -6,10 +6,16 @@ package cmd
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 )
 
+func TestMain(m *testing.M) {
+	os.Setenv("NOTION_DATABASE_ID", "b3a02fe5c7b14208a880cdd92e5b10ae")
+	status := m.Run()
+	os.Exit(status)
+}
 func TestNewAddCmd(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -49,20 +55,14 @@ func TestNewAddCmd(t *testing.T) {
 			cmd.SetOut(buf)
 			cmd.SetArgs(tt.args)
 
-			if err := cmd.Execute(); err != nil {
-				if tt.wantErr {
-					if tt.want != err.Error() {
-						t.Errorf("unexpected error response: error = %v, got = %v", tt.want, err.Error())
-					}
-					return
-				}
+			err := cmd.Execute()
+			if !tt.wantErr && err != nil {
+				t.Fatalf("unexpected error = %#v", err)
 			}
-
 			got := buf.String()
 			if !strings.HasPrefix(got, tt.want) {
-				t.Errorf("unexpected response: want = %v, got = %v", tt.want, got)
+				t.Fatalf("want %#v, but %#v", tt.want, got)
 			}
-
 		})
 	}
 }

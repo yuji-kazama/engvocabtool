@@ -1,9 +1,16 @@
 package notion
 
 import (
+	"errors"
 	"os"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	os.Setenv("NOTION_DATABASE_ID", "b3a02fe5c7b14208a880cdd92e5b10ae")
+	status := m.Run()
+	os.Exit(status)
+}
 
 func TestClient_GetPage(t *testing.T) {
 	type args struct {
@@ -18,32 +25,50 @@ func TestClient_GetPage(t *testing.T) {
 		args    args
 		want    page
 		wantErr bool
+		err error
 	}{
 		{
 			name: "normal",
 			args: args{
-				pageId: "36ad047fbf4d41879eb90cc028ea7074",
+				pageId: "781b31df08284c6ab414e4f487fa60e0",
 			},
 			want: page{
 				Object: "page",
-				Id:     "36ad047fbf4d41879eb90cc028ea7074",
+				Id:     "781b31df08284c6ab414e4f487fa60e0",
 			},
 			wantErr: false,
 		},
+		{
+			name: "empty args",
+			args: args{
+				pageId: "",
+			},
+			wantErr: true,
+			err: errors.New("response error: 400"),
+		},
+		{
+			name: "no existing pageId",
+			args: args{
+				pageId: "no-exting-page",
+			},
+			wantErr: true,
+			err: errors.New("response error: 400"),
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
 			got, err := c.GetPage(tt.args.pageId)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("Client.GetPage() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if !tt.wantErr && err != nil{
+				t.Fatalf("unexpected error = %#v", err)
 			}
-			if got.Object != tt.want.Object {
-				t.Fatalf("Client.GetPage() = %v, want %v", got, tt.want)
+			if tt.wantErr && err == tt.err {
+				t.Fatalf("want %#v, but %#v", tt.err, err)
 			}
-			// t.Logf("\n Name = %v", got.Properties.Name.Title[0].Text.Content)
-			// t.Logf("\n Frequency = %v", got.Properties.Frequency.Number)
+			if !tt.wantErr && got.Object != tt.want.Object {
+				t.Fatalf("want %#v, but %#v", got.Object, tt.want.Object)
+			}
 		})
 	}
 }
@@ -57,11 +82,12 @@ func TestClient_UpdatePage(t *testing.T) {
 		name    string
 		args    args
 		wantErr bool
+		err error
 	}{
 		{
-			name: "normal",
+			name: "normal: Status",
 			args: args{
-				pageId: "36ad047fbf4d41879eb90cc028ea7074",
+				pageId: "781b31df08284c6ab414e4f487fa60e0",
 				json: `{
 					"properties": {
 						"Status": {
@@ -76,7 +102,7 @@ func TestClient_UpdatePage(t *testing.T) {
 						},
 						"Study Date": {
 							"date": {
-								"start": "2022-04-09",
+								"start": "2022-04-19",
 								"end": null,
 								"time_zone": null
 							}
@@ -87,13 +113,13 @@ func TestClient_UpdatePage(t *testing.T) {
 							}
 						},
 						"Frequency": {
-							"number": 4
+							"number": 1
 						},
 						"Meaning": {
 							"rich_text": [
 								{
 									"text": {
-										"content": "updated"
+										"content": "updated2"
 									}
 								}
 							]
@@ -102,7 +128,7 @@ func TestClient_UpdatePage(t *testing.T) {
 							"rich_text": [
 								{
 									"text": {
-										"content": "updated"
+										"content": "updated2"
 									}
 								}
 							]
@@ -125,17 +151,19 @@ func TestClient_UpdatePage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			got, err := c.UpdatePage(tt.args.pageId, tt.args.json)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Client.UpdatePage() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			_, err := c.UpdatePage(tt.args.pageId, tt.args.json)
+
+			if !tt.wantErr && err != nil{
+				t.Fatalf("unexpected error = %#v", err)
 			}
-			t.Log(got.URL)
+			if tt.wantErr && err == tt.err {
+				t.Fatalf("want %#v, but %#v", tt.err, err)
+			}
 		})
 	}
 }
 
-func TestClient_PostPage(t *testing.T) {
+func TestClient_CreatePage(t *testing.T) {
 	type args struct {
 		json string
 	}
@@ -143,6 +171,7 @@ func TestClient_PostPage(t *testing.T) {
 		name    string
 		args    args
 		wantErr bool
+		err error
 	}{
 		{
 			name: "normal",
@@ -170,12 +199,14 @@ func TestClient_PostPage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			got, err := c.CreatePage(tt.args.json)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Client.PostPage() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			_, err := c.CreatePage(tt.args.json)
+
+			if !tt.wantErr && err != nil{
+				t.Fatalf("unexpected error = %#v", err)
 			}
-			t.Log(got.URL)
+			if tt.wantErr && err == tt.err {
+				t.Fatalf("want %#v, but %#v", tt.err, err)
+			}
 		})
 	}
 }
@@ -184,6 +215,7 @@ func TestClient_GetAllPages(t *testing.T) {
 	tests := []struct {
 		name    string
 		wantErr bool
+		err  error
 	}{
 		{
 			name:    "normal",
@@ -193,12 +225,13 @@ func TestClient_GetAllPages(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			got, err := c.GetAllPages()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Client.GetAllPages() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			_, err := c.GetAllPages()
+			if !tt.wantErr && err != nil{
+				t.Fatalf("unexpected error = %#v", err)
 			}
-			t.Logf("Object = %v", got.Object)
+			if tt.wantErr && err == tt.err {
+				t.Fatalf("want %#v, but %#v", tt.err, err)
+			}
 		})
 	}
 }
@@ -211,6 +244,7 @@ func TestClient_GetPageByName(t *testing.T) {
 		name    string
 		args    args
 		wantErr bool
+		err error
 	}{
 		{
 			name: "normal",
@@ -230,12 +264,13 @@ func TestClient_GetPageByName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			got, err := c.GetPageByName(tt.args.name)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Client.GetPageByName() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			_, err := c.GetPageByName(tt.args.name)
+			if !tt.wantErr && err != nil{
+				t.Fatalf("unexpected error = %#v", err)
 			}
-			t.Logf("Result = %v", got.Results)
+			if tt.wantErr && err == tt.err {
+				t.Fatalf("want %#v, but %#v", tt.err, err)
+			}
 		})
 	}
 }
@@ -245,9 +280,10 @@ func TestClient_Exist(t *testing.T) {
 		name string
 	}
 	tests := []struct {
-		name   string
-		args   args
-		want   bool
+		name string
+		args args
+		want bool
+		wantErr bool
 	}{
 		{
 			name: "not exist",
@@ -260,8 +296,10 @@ func TestClient_Exist(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			if got := c.Exist(tt.args.name); got != tt.want {
-				t.Errorf("Client.Exist() = %v, want %v", got, tt.want)
+			got := c.Exist(tt.args.name)
+
+			if !tt.wantErr && got != tt.want {
+				t.Fatalf("want %#v, but %#v", got, tt.want)
 			}
 		})
 	}

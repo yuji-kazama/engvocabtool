@@ -28,15 +28,6 @@ type Page struct {
 					Content string      `json:"content"`
 					Link    interface{} `json:"link"`
 				} `json:"text"`
-				Annotations struct {
-					Bold          bool   `json:"bold"`
-					Italic        bool   `json:"italic"`
-					Strikethrough bool   `json:"strikethrough"`
-					Underline     bool   `json:"underline"`
-					Code          bool   `json:"code"`
-					Color         string `json:"color"`
-				} `json:"annotations"`
-				PlainText string      `json:"plain_text"`
 				Href      interface{} `json:"href"`
 			} `json:"rich_text"`
 		} `json:"Meaning"`
@@ -76,14 +67,6 @@ type Page struct {
 					Content string      `json:"content"`
 					Link    interface{} `json:"link"`
 				} `json:"text"`
-				Annotations struct {
-					Bold          bool   `json:"bold"`
-					Italic        bool   `json:"italic"`
-					Strikethrough bool   `json:"strikethrough"`
-					Underline     bool   `json:"underline"`
-					Code          bool   `json:"code"`
-					Color         string `json:"color"`
-				} `json:"annotations"`
 				PlainText string      `json:"plain_text"`
 				Href      interface{} `json:"href"`
 			} `json:"rich_text"`
@@ -109,29 +92,10 @@ type Page struct {
 					Content string      `json:"content"`
 					Link    interface{} `json:"link"`
 				} `json:"text"`
-				Annotations struct {
-					Bold          bool   `json:"bold"`
-					Italic        bool   `json:"italic"`
-					Strikethrough bool   `json:"strikethrough"`
-					Underline     bool   `json:"underline"`
-					Code          bool   `json:"code"`
-					Color         string `json:"color"`
-				} `json:"annotations"`
 				PlainText string      `json:"plain_text"`
 				Href      interface{} `json:"href"`
 			} `json:"rich_text"`
 		} `json:"Note"`
-		Image struct {
-			ID    string `json:"id"`
-			Type  string `json:"type"`
-			Files []struct {
-				Name     string `json:"name"`
-				Type     string `json:"type"`
-				External struct {
-					URL string `json:"url"`
-				} `json:"external"`
-			} `json:"files"`
-		} `json:"Image"`
 		CheckNum struct {
 			ID     string `json:"id"`
 			Type   string `json:"type"`
@@ -155,14 +119,6 @@ type Page struct {
 					Content string      `json:"content"`
 					Link    interface{} `json:"link"`
 				} `json:"text"`
-				Annotations struct {
-					Bold          bool   `json:"bold"`
-					Italic        bool   `json:"italic"`
-					Strikethrough bool   `json:"strikethrough"`
-					Underline     bool   `json:"underline"`
-					Code          bool   `json:"code"`
-					Color         string `json:"color"`
-				} `json:"annotations"`
 				PlainText string      `json:"plain_text"`
 				Href      interface{} `json:"href"`
 			} `json:"title"`
@@ -359,7 +315,7 @@ func (c *Client) GetPage(pageId string) (*Page, error) {
 		return nil, err
 	}
 	res, err := c.httpClient.Do(req)
-	if verifyResponse(res, err) != nil {
+	if err := verifyResponse(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -386,6 +342,7 @@ func (c *Client) UpdatePage(pageId string, data string) (*CreateResult, error) {
 }
 
 func (c *Client) CreatePage(data string) (*CreateResult, error) {
+	fmt.Println(data)
 	req, err := c.newRequest(http.MethodPost, "/pages", bytes.NewBuffer(([]byte(data))))
 	if err != nil {
 		return nil, err
@@ -395,7 +352,7 @@ func (c *Client) CreatePage(data string) (*CreateResult, error) {
 
 func doRequest(c *Client, req *http.Request) (*CreateResult, error) {
 	res, err := c.httpClient.Do(req)
-	if verifyResponse(res, err) != nil {
+	if err := verifyResponse(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -445,7 +402,7 @@ func search(c *Client, query string) (*SearchResult, error) {
 		return nil, err
 	}
 	res, err := c.httpClient.Do(req)
-	if verifyResponse(res, err) != nil {
+	if err := verifyResponse(res, err); err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
@@ -473,7 +430,7 @@ func verifyResponse(res *http.Response, err error) (error) {
 		return err
 	}
 	if res.StatusCode != 200 {
-		return fmt.Errorf("request error: %v", res)
+		return fmt.Errorf("response error: %v", res.StatusCode)
 	}
 	return nil
 }
