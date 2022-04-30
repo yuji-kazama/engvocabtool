@@ -260,7 +260,7 @@ type SearchResult struct {
 			Frequency struct {
 				ID     string `json:"id"`
 				Type   string `json:"type"`
-				Number int    `json:"number"`
+				Number float64    `json:"number"`
 			} `json:"Frequency"`
 			Name struct {
 				ID    string `json:"id"`
@@ -342,7 +342,7 @@ func (c *Client) UpdatePage(pageId string, data string) (*CreateResult, error) {
 }
 
 func (c *Client) CreatePage(data string) (*CreateResult, error) {
-	fmt.Println(data)
+	// fmt.Println(data)
 	req, err := c.newRequest(http.MethodPost, "/pages", bytes.NewBuffer(([]byte(data))))
 	if err != nil {
 		return nil, err

@@ -1,7 +1,3 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
@@ -12,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -28,30 +25,9 @@ func NewAddCmd() *cobra.Command {
 		Use:   "add",
 		Short: "Add a word to Notion database",
 		Long: `Add a word to Notion database.`,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			word := args[0]
-			nc := notion.NewClient()
-
-			if nc.Exist(word) {
-				return fmt.Errorf("already exists")
-			}
-
-			wc := words.NewClient()
-			res, err := wc.GetEverything(word)
-			if err != nil {
-				return err
-			}
-
-			json := createPostJson(res)
-			// fmt.Println(json)
-			pr, err := nc.CreatePage(json)
-			if err != nil {
-				return err
-			}
-			cmd.Println("Success: word has been added")
-			cmd.Println(pr.URL)
-			return nil
+			return addWord(args)
 		},
 		SilenceErrors: true,
 		SilenceUsage: true,
@@ -59,17 +35,74 @@ func NewAddCmd() *cobra.Command {
 	return cmd
 }
 
-func getToday() string {
-	return time.Now().String()[0:10] // e.g. 2022-04-09
+func addWord(args []string) error {
+	var word string
+	var err error
+	if len(args) == 0 {
+		word, err = showInputPrompt()
+		if err != nil {
+			return err
+		}
+	} else {
+		word = args[0]
+	}
+
+	nc := notion.NewClient()
+	if nc.Exist(word) {
+		return fmt.Errorf("alredy exists")
+	}
+
+	wc := words.NewClient()
+	res, err := wc.GetEverything(word)
+	if err != nil {
+		return err
+	}
+
+	index, err := showSelectPrompt(res)
+	if err != nil {
+		return err
+	}
+
+	json := createPostJson(index, res)
+	pr, err := nc.CreatePage(json)
+	if err != nil {
+		return err
+	}
+	fmt.Println(pr.URL)
+	return nil
 }
 
-func createPostJson(res *words.AllResults) (string) {
+func showInputPrompt() (string, error) {
+	prompt := promptui.Prompt{
+		Label: "Input Word",
+	}
+	return prompt.Run()
+}
+
+func showSelectPrompt(res *words.AllResults) (int, error) {
+	var items []string
+	for i, s := range res.Results {
+		items = append(items, strconv.Itoa(i+1)+". "+"["+s.PartOfSpeech+"] "+s.Definition)
+	}
+	prompt := promptui.Select{
+		Label: "Select Definition",
+		Items: items,
+	}
+	index, _, err := prompt.Run()
+	return index, err
+}
+
+func getToday() string {
+	return time.Now().String()[0:10]
+}
+
+func createPostJson(index int, res *words.AllResults) (string) {
 	name := res.Word
 	frequency := strconv.FormatFloat(res.Frequency, 'f', -1, 64)
-	examples := res.Results[0].Examples
-	synonyms := res.Results[0].Synonyms
-	meaning := res.Results[0].Definition
-	class := partOfSpeechToClass[res.Results[0].PartOfSpeech]
+	examples := res.Results[index].Examples
+	synonyms := res.Results[index].Synonyms
+	meaning := res.Results[index].Definition
+	class := partOfSpeechToClass[res.Results[index].PartOfSpeech]
 
 	if class == "" {
 		class = "Unknown"
@@ -81,12 +114,13 @@ func createPostJson(res *words.AllResults) (string) {
 	} else {
 		example = examples[0]
 	}
+
 	var synonym string
 	if len(synonyms) < 1 {
 		synonym = ""
 	} else {
 		for i, s := range synonyms {
-			if i == 1 {
+			if i == 0 {
 				synonym = s
 			} else {
 				synonym = synonym + ", " + s
@@ -107,7 +141,6 @@ func createPostJson(res *words.AllResults) (string) {
 						}
 					}
 				]
-
 			},
 			"Status": {
 				"select": {
