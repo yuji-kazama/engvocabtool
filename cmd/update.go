@@ -50,7 +50,7 @@ func update(args []string) error {
 		return err
 	}
 
-	json := createJson(ar, sr)
+	json := createJson(ar)
 	up, err := nc.UpdatePage(sr.Results[0].ID, json)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func update(args []string) error {
 	return nil
 }
 
-func createJson(wr *words.AllResults, nr *notion.SearchResult) string {
+func createJson(wr *words.AllResults) string {
 	frequency := strconv.FormatFloat(wr.Frequency, 'f', -1, 64)
 	json := `{
 		"parent": {

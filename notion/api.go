@@ -286,7 +286,7 @@ type SearchResult struct {
 		} `json:"properties"`
 		URL string `json:"url"`
 	} `json:"results"`
-	NextCursor interface{} `json:"next_cursor"`
+	NextCursor string `json:"next_cursor"`
 	HasMore    bool        `json:"has_more"`
 }
 
@@ -369,15 +369,28 @@ func doRequest(c *Client, req *http.Request) (*CreateResult, error) {
 	return &result, nil
 }
 
-func (c *Client) GetAllPages() (*SearchResult, error) {
-	query := `{
-		"filter": {
-			"property": "Name",
-			"title": {
-				"is_not_empty": true
+func (c *Client) GetAllPages(scursor string) (*SearchResult, error) {
+	var query string
+	if scursor == "" {
+		query = `{
+			"filter": {
+				"property": "Name",
+				"title": {
+					"is_not_empty": true
+				}
 			}
-		}
-	}`
+		}`
+	} else {
+		query = `{
+			"filter": {
+				"property": "Name",
+				"title": {
+					"is_not_empty": true
+				}
+			},
+			"start_cursor": "` + scursor + `" 
+		}`
+	}
 	return search(c, query)
 }
 
@@ -411,6 +424,8 @@ func search(c *Client, query string) (*SearchResult, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// fmt.Println(string(body))
 
 	var result SearchResult
 	if err := json.Unmarshal(body, &result); err != nil {

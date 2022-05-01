@@ -225,13 +225,14 @@ func TestClient_GetAllPages(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := NewClient()
-			_, err := c.GetAllPages()
+			got, err := c.GetAllPages("1d82bcfe-eaad-465b-abe3-05989902e4f1")
 			if !tt.wantErr && err != nil{
 				t.Fatalf("unexpected error = %#v", err)
 			}
 			if tt.wantErr && err == tt.err {
 				t.Fatalf("want %#v, but %#v", tt.err, err)
 			}
+			t.Logf(got.Results[0].ID)
 		})
 	}
 }
