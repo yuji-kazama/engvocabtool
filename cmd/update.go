@@ -4,6 +4,7 @@ import (
 	"engvocabtool/notion"
 	"engvocabtool/words"
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -53,7 +54,7 @@ func update(args []string) error {
 		return err
 	}
 
-	json := createJsonForAdd(index, ar)
+	json := createJsonForUpdate(index, ar)
 	up, err := nc.UpdatePage(sr.Results[0].ID, json)
 	if err != nil {
 		return err
@@ -62,6 +63,78 @@ func update(args []string) error {
 	return nil
 }
 
+func createJsonForUpdate(index int, res *words.AllResults) string {
+	frequency := strconv.FormatFloat(res.Frequency, 'f', -1, 64)
+	examples := res.Results[index].Examples
+	synonyms := res.Results[index].Synonyms
+	meaning := res.Results[index].Definition
+	class := partOfSpeechToClass[res.Results[index].PartOfSpeech]
+
+	if class == "" {
+		class = "Unknown"
+	}
+
+	var example string
+	if len(examples) < 1 {
+		example = ""
+	} else {
+		example = examples[0]
+	}
+
+	var synonym string
+	if len(synonyms) < 1 {
+		synonym = ""
+	} else {
+		for i, s := range synonyms {
+			if i == 0 {
+				synonym = s
+			} else {
+				synonym = synonym + ", " + s
+			}
+		}
+	}
+
+	json := `{
+		"properties": {
+			"Class": {
+				"select": {
+					"name": "` + class + `"
+				}
+			},
+			"Frequency": {
+				"number": ` + frequency + `
+			},
+			"Meaning": {
+				"rich_text": [
+					{
+						"text": {
+							"content": "` + meaning + `"
+						}
+					}
+				]
+			},
+			"Sentence": {
+				"rich_text": [
+					{
+						"text": {
+							"content": "` + example + `" 
+						}
+					}
+				]
+			},
+			"Synonyms": {
+				"rich_text": [
+					{
+						"text": {
+							"content": "` + synonym + `" 
+						}
+					}
+				]
+			}
+		} 
+	}`
+	return json
+}
 
 
 func init() {
