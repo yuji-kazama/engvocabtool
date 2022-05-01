@@ -1,4 +1,4 @@
-module notion-wordsapi-test
+module engvocabtool
 
 go 1.17
 

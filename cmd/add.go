@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	"engvocabtool/notion"
+	"engvocabtool/words"
 	"fmt"
-	"notion-wordsapi-test/notion"
-	"notion-wordsapi-test/words"
 	"os"
 	"strconv"
 	"time"
@@ -12,11 +12,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var partOfSpeechToClass = map[string]string {
-	"noun": "Noun",
-	"adjective": "Adjective",
-	"adverb": "Adverb",
-	"verb": "Verb",
+var partOfSpeechToClass = map[string]string{
+	"noun":        "Noun",
+	"adjective":   "Adjective",
+	"adverb":      "Adverb",
+	"verb":        "Verb",
 	"conjunction": "Conjunction",
 }
 
@@ -24,13 +24,13 @@ func NewAddCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add",
 		Short: "Add a word to Notion database",
-		Long: `Add a word to Notion database.`,
-		Args: cobra.MaximumNArgs(1),
+		Long:  `Add a word to Notion database. The information of the word such as meanings, synonyms, examples and etc is gotten from WordsAPI.`,
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return addWord(args)
 		},
 		SilenceErrors: true,
-		SilenceUsage: true,
+		SilenceUsage:  true,
 	}
 	return cmd
 }
@@ -49,7 +49,7 @@ func addWord(args []string) error {
 
 	nc := notion.NewClient()
 	if nc.Exist(word) {
-		return fmt.Errorf("alredy exists")
+		return fmt.Errorf("input word alredy exists")
 	}
 
 	wc := words.NewClient()
@@ -96,7 +96,7 @@ func getToday() string {
 	return time.Now().String()[0:10]
 }
 
-func createPostJson(index int, res *words.AllResults) (string) {
+func createPostJson(index int, res *words.AllResults) string {
 	name := res.Word
 	frequency := strconv.FormatFloat(res.Frequency, 'f', -1, 64)
 	examples := res.Results[index].Examples

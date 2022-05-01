@@ -1,6 +1,6 @@
 package main
 
-import "notion-wordsapi-test/cmd"
+import "engvocabtool/cmd"
 
 func main() {
 	cmd.Execute()
