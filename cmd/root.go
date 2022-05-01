@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"engvocabtool/words"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -41,4 +43,17 @@ func showInputPrompt() (string, error) {
 		Label: "Input Word",
 	}
 	return prompt.Run()
+}
+
+func showSelectPrompt(res *words.AllResults) (int, error) {
+	var items []string
+	for i, s := range res.Results {
+		items = append(items, strconv.Itoa(i+1)+". "+"["+s.PartOfSpeech+"] "+s.Definition)
+	}
+	prompt := promptui.Select{
+		Label: "Select Definition",
+		Items: items,
+	}
+	index, _, err := prompt.Run()
+	return index, err
 }

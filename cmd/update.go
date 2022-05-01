@@ -4,8 +4,6 @@ import (
 	"engvocabtool/notion"
 	"engvocabtool/words"
 	"fmt"
-	"os"
-	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -50,7 +48,12 @@ func update(args []string) error {
 		return err
 	}
 
-	json := createJson(ar)
+	index, err := showSelectPrompt(ar)
+	if err != nil {
+		return err
+	}
+
+	json := createJsonForAdd(index, ar)
 	up, err := nc.UpdatePage(sr.Results[0].ID, json)
 	if err != nil {
 		return err
@@ -59,20 +62,7 @@ func update(args []string) error {
 	return nil
 }
 
-func createJson(wr *words.AllResults) string {
-	frequency := strconv.FormatFloat(wr.Frequency, 'f', -1, 64)
-	json := `{
-		"parent": {
-			"database_id": "` + os.Getenv("NOTION_DATABASE_ID") + `"
-		},
-		"properties": {
-			"Frequency": {
-				"number": ` + frequency + `
-			}
-		} 
-	}`
-	return json
-}
+
 
 func init() {
 	rootCmd.AddCommand(updateCmd)

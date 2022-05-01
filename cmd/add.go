@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -60,7 +59,7 @@ func add(args []string) error {
 		return err
 	}
 
-	json := createPostJson(index, res)
+	json := createJsonForAdd(index, res)
 	pr, err := nc.CreatePage(json)
 	if err != nil {
 		return err
@@ -69,24 +68,13 @@ func add(args []string) error {
 	return nil
 }
 
-func showSelectPrompt(res *words.AllResults) (int, error) {
-	var items []string
-	for i, s := range res.Results {
-		items = append(items, strconv.Itoa(i+1)+". "+"["+s.PartOfSpeech+"] "+s.Definition)
-	}
-	prompt := promptui.Select{
-		Label: "Select Definition",
-		Items: items,
-	}
-	index, _, err := prompt.Run()
-	return index, err
-}
+
 
 func getToday() string {
 	return time.Now().String()[0:10]
 }
 
-func createPostJson(index int, res *words.AllResults) string {
+func createJsonForAdd(index int, res *words.AllResults) string {
 	name := res.Word
 	frequency := strconv.FormatFloat(res.Frequency, 'f', -1, 64)
 	examples := res.Results[index].Examples
