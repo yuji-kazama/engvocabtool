@@ -16,8 +16,9 @@ func NewRootCmd() *cobra.Command {
 		Short: "A brief description",
 		Long:  `A longer description`,
 	}
-	cmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// cmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	cmd.AddCommand(NewAddCmd())
+	cmd.AddCommand(NewUpdateCmd())
 	return cmd
 }
 

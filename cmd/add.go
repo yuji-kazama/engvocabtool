@@ -27,7 +27,7 @@ func NewAddCmd() *cobra.Command {
 		Long:  `Add a word to Notion database. The information of the word such as meanings, synonyms, examples and etc is gotten from WordsAPI.`,
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return addWord(args)
+			return add(args)
 		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
@@ -35,7 +35,7 @@ func NewAddCmd() *cobra.Command {
 	return cmd
 }
 
-func addWord(args []string) error {
+func add(args []string) error {
 	var word string
 	var err error
 	if len(args) == 0 {
