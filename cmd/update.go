@@ -10,8 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewUpdateCmd() *cobra.Command {
-	cmd := &cobra.Command{
+var updateCmd = &cobra.Command{
 		Use:   "update",
 		Short: "Update a word of Notion database",
 		Long: `Update a word of Notion database`,
@@ -21,8 +20,6 @@ func NewUpdateCmd() *cobra.Command {
 		},
 		SilenceErrors: true,
 		SilenceUsage: true,
-	}
-	return cmd
 }
 
 func update(args []string) error {
@@ -78,4 +75,5 @@ func createJson(wr *words.AllResults, nr *notion.SearchResult) string {
 }
 
 func init() {
+	rootCmd.AddCommand(updateCmd)
 }

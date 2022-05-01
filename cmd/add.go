@@ -20,8 +20,7 @@ var partOfSpeechToClass = map[string]string{
 	"conjunction": "Conjunction",
 }
 
-func NewAddCmd() *cobra.Command {
-	cmd := &cobra.Command{
+var addCmd = &cobra.Command{
 		Use:   "add",
 		Short: "Add a word to Notion database",
 		Long:  `Add a word to Notion database. The information of the word such as meanings, synonyms, examples and etc is gotten from WordsAPI.`,
@@ -31,8 +30,6 @@ func NewAddCmd() *cobra.Command {
 		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
-	}
-	return cmd
 }
 
 func add(args []string) error {
@@ -70,13 +67,6 @@ func add(args []string) error {
 	}
 	fmt.Println(pr.URL)
 	return nil
-}
-
-func showInputPrompt() (string, error) {
-	prompt := promptui.Prompt{
-		Label: "Input Word",
-	}
-	return prompt.Run()
 }
 
 func showSelectPrompt(res *words.AllResults) (int, error) {
@@ -200,7 +190,7 @@ func createPostJson(index int, res *words.AllResults) string {
 }
 
 func init() {
-	// rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(addCmd)
 
 	// Here you will define your flags and configuration settings.
 
