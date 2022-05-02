@@ -55,7 +55,7 @@ func updateall(args []string) error {
 	return nil
 }
 
-func createJsonForUpdateall(wr *words.AllResults) string {
+func createJsonForUpdateall(wr *words.Response) string {
 	frequency := strconv.FormatFloat(wr.Frequency, 'f', -1, 64)
 	json := `{
 		"properties": {

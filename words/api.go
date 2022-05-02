@@ -9,27 +9,41 @@ import (
 	"os"
 )
 
+type ClientOption func(*Client)
+
 type Client struct {
 	baseURL string
 	httpClient *http.Client
 }
 
-type AllResults struct {
+type Response struct {
 	Word    string `json:"word"`
-	Results []struct {
-		Definition   string   `json:"definition"`
-		PartOfSpeech string   `json:"partOfSpeech"`
-		Synonyms     []string `json:"synonyms,omitempty"`
-		Examples     []string `json:"examples,omitempty"`
-	} `json:"results"`
+	Results []Result `json:"results"`
 	Frequency float64 `json:"frequency"`
 }
 
-func NewClient() (*Client) {
+type Result struct {
+	Definition   string   `json:"definition"`
+	PartOfSpeech string   `json:"partOfSpeech"`
+	Synonyms     []string `json:"synonyms,omitempty"`
+	Examples     []string `json:"examples,omitempty"`
+}
+
+func NewClient(opts ...ClientOption) (*Client) {
 	c := new(Client)
 	c.baseURL = "https://wordsapiv1.p.rapidapi.com/words/"
 	c.httpClient = new(http.Client)
+
+	for _, opt := range opts {
+		opt(c)
+	}
 	return c
+}
+
+func WithHttpClient(client *http.Client) ClientOption {
+	return func(c *Client) {
+		c.httpClient = client
+	}
 }
 
 func (c *Client) newRequest(method, spath string, body io.Reader) (*http.Request, error) {
@@ -43,7 +57,7 @@ func (c *Client) newRequest(method, spath string, body io.Reader) (*http.Request
 	return req, nil
 }
 
-func (c *Client) GetEverything(word string) (*AllResults, error) {
+func (c *Client) GetEverything(word string) (*Response, error) {
 	req, err := c.newRequest(http.MethodGet, word, nil)
 	if err != nil {
 		return nil, err
@@ -67,7 +81,7 @@ func (c *Client) GetEverything(word string) (*AllResults, error) {
 		return nil, err
 	}
 
-	var result AllResults
+	var result Response
 	if err := json.Unmarshal(body, &result); err != nil {
 		fmt.Printf("cannot unmarshal json: %v", err)
 		return nil, err

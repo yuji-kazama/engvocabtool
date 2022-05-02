@@ -74,7 +74,7 @@ func getToday() string {
 	return time.Now().String()[0:10]
 }
 
-func createJsonForAdd(index int, res *words.AllResults) string {
+func createJsonForAdd(index int, res *words.Response) string {
 	name := res.Word
 	frequency := strconv.FormatFloat(res.Frequency, 'f', -1, 64)
 	examples := res.Results[index].Examples

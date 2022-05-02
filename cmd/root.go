@@ -45,7 +45,7 @@ func showInputPrompt() (string, error) {
 	return prompt.Run()
 }
 
-func showSelectPrompt(res *words.AllResults) (int, error) {
+func showSelectPrompt(res *words.Response) (int, error) {
 	var items []string
 	for i, s := range res.Results {
 		items = append(items, strconv.Itoa(i+1)+". "+"["+s.PartOfSpeech+"] "+s.Definition)

@@ -63,7 +63,7 @@ func update(args []string) error {
 	return nil
 }
 
-func createJsonForUpdate(index int, res *words.AllResults) string {
+func createJsonForUpdate(index int, res *words.Response) string {
 	frequency := strconv.FormatFloat(res.Frequency, 'f', -1, 64)
 	examples := res.Results[index].Examples
 	synonyms := res.Results[index].Synonyms
