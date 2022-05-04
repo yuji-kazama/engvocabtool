@@ -11,14 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var partOfSpeechToClass = map[string]string{
-	"noun":        "Noun",
-	"adjective":   "Adjective",
-	"adverb":      "Adverb",
-	"verb":        "Verb",
-	"conjunction": "Conjunction",
-}
-
 var addCmd = &cobra.Command{
 		Use:   "add",
 		Short: "Add a word to Notion database",
@@ -104,7 +96,7 @@ func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreate
 			},
 			"Class": notionapi.SelectProperty{
 				Select: notionapi.Option{
-					Name: partOfSpeechToClass[wres.Results[index].PartOfSpeech],
+					Name: wres.Results[index].PartOfSpeech,
 				},
 			},
 			"Frequency": notionapi.NumberProperty{
@@ -129,9 +121,6 @@ func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreate
 	}
 	return pcr
 }
-
-
-
 
 func init() {
 	rootCmd.AddCommand(addCmd)

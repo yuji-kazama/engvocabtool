@@ -86,7 +86,7 @@ func getPageUpdateRequest(wres *words.Response, index int) *notionapi.PageUpdate
 		Properties: notionapi.Properties{
 			"Class": notionapi.SelectProperty{
 				Select: notionapi.Option{
-					Name: partOfSpeechToClass[wres.Results[index].PartOfSpeech],
+					Name: wres.Results[index].PartOfSpeech,
 				},
 			},
 			"Frequency": notionapi.NumberProperty{
