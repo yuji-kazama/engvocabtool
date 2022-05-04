@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"engvocabtool/notion"
+	"context"
 	"engvocabtool/words"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
+	"github.com/jomei/notionapi"
 	"github.com/spf13/cobra"
 )
 
@@ -43,150 +43,130 @@ func add(args []string) error {
 		word = args[0]
 	}
 
-	nc := notion.NewClient()
-	if nc.Exist(word) {
+	nc := notionapi.NewClient(notionapi.Token(os.Getenv("NOTION_INTEGRATION_TOKEN")))
+	page, err := getPage(word, nc)
+	if err != nil {
+		return err
+	}
+	if len(page.Results) > 1 {
 		return fmt.Errorf("input word alredy exists")
 	}
 
 	wc := words.NewClient()
-	res, err := wc.GetEverything(word)
+	wres, err := wc.GetEverything(word)
 	if err != nil {
 		return err
 	}
 
-	index, err := showSelectPrompt(res)
+	index, err := showSelectPrompt(wres)
 	if err != nil {
 		return err
 	}
 
-	json := createJsonForAdd(index, res)
-	pr, err := nc.CreatePage(json)
+	pcr := createPageCreateRequest(wres, index)
+	np, err := nc.Page.Create(context.Background(), pcr)
 	if err != nil {
 		return err
 	}
-	fmt.Println(pr.URL)
+	fmt.Println(np.URL)
 	return nil
 }
 
+func createPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreateRequest {
+	example := getExample(wres.Results[index].Examples)
+	synonym := getSynonum(wres.Results[index].Synonyms)
 
-
-func getToday() string {
-	return time.Now().String()[0:10]
+	dateObj := notionapi.Date(time.Now())
+	pcr := &notionapi.PageCreateRequest{
+		Parent: notionapi.Parent{
+			Type:       notionapi.ParentTypeDatabaseID,
+			DatabaseID: notionapi.DatabaseID(os.Getenv("NOTION_DATABASE_ID")),
+		},
+		Properties: notionapi.Properties{
+			"Name": notionapi.TitleProperty{
+				Title: []notionapi.RichText{
+					{Text: notionapi.Text{Content: wres.Word}},
+				},
+			},
+			"Status": notionapi.SelectProperty{
+				Select: notionapi.Option{
+					Name: "1: New",
+				},
+			},
+			"Check Num": notionapi.SelectProperty{
+				Select: notionapi.Option{
+					Name: "1",
+				},
+			},
+			"Study Date": notionapi.DateProperty{
+				Date: notionapi.DateObject{
+					Start: &dateObj,
+				},
+			},
+			"Class": notionapi.SelectProperty{
+				Select: notionapi.Option{
+					Name: partOfSpeechToClass[wres.Results[index].PartOfSpeech],
+				},
+			},
+			"Frequency": notionapi.NumberProperty{
+				Number: wres.Frequency,
+			},
+			"Meaning": notionapi.RichTextProperty{
+				RichText: []notionapi.RichText{
+					{Text: notionapi.Text{Content: wres.Results[index].Definition}},
+				},
+			},
+			"Sentence": notionapi.RichTextProperty{
+				RichText: []notionapi.RichText{
+					{Text: notionapi.Text{Content: example}},
+				},
+			},
+			"Synonyms": notionapi.RichTextProperty{
+				RichText: []notionapi.RichText{
+					{Text: notionapi.Text{Content: synonym}},
+				},
+			},
+		},
+	}
+	return pcr
 }
 
-func createJsonForAdd(index int, res *words.Response) string {
-	name := res.Word
-	frequency := strconv.FormatFloat(res.Frequency, 'f', -1, 64)
-	examples := res.Results[index].Examples
-	synonyms := res.Results[index].Synonyms
-	meaning := res.Results[index].Definition
-	class := partOfSpeechToClass[res.Results[index].PartOfSpeech]
-
-	if class == "" {
-		class = "Unknown"
-	}
-
-	var example string
-	if len(examples) < 1 {
-		example = ""
-	} else {
-		example = examples[0]
-	}
-
-	var synonym string
+func getSynonum(synonyms []string) string {
 	if len(synonyms) < 1 {
-		synonym = ""
-	} else {
-		for i, s := range synonyms {
-			if i == 0 {
-				synonym = s
-			} else {
-				synonym = synonym + ", " + s
-			}
+		return ""
+	}
+	var synonym string
+	for i, s := range synonyms {
+		if i == 0 {
+			synonym = s
+		} else {
+			synonym = synonym + ", " + s
 		}
 	}
-
-	json := `{
-		"parent": {
-			"database_id": "` + os.Getenv("NOTION_DATABASE_ID") + `"
-		},
-		"properties": {
-			"Name": {
-				"title": [
-					{
-						"text": {
-							"content": "` + name + `" 
-						}
-					}
-				]
-			},
-			"Status": {
-				"select": {
-					"name": "1: New"
-				}
-			},
-			"Check Num": {
-				"select": {
-					"name": "1"
-				}
-			},
-			"Study Date": {
-				"date": {
-					"start": "` + getToday() + `",
-					"end": null,
-					"time_zone": null
-				}
-			},
-			"Class": {
-				"select": {
-					"name": "` + class + `"
-				}
-			},
-			"Frequency": {
-				"number": ` + frequency + `
-			},
-			"Meaning": {
-				"rich_text": [
-					{
-						"text": {
-							"content": "` + meaning + `"
-						}
-					}
-				]
-			},
-			"Sentence": {
-				"rich_text": [
-					{
-						"text": {
-							"content": "` + example + `" 
-						}
-					}
-				]
-			},
-			"Synonyms": {
-				"rich_text": [
-					{
-						"text": {
-							"content": "` + synonym + `" 
-						}
-					}
-				]
-			}
-		} 
-	}`
-	return json
+	return synonym
 }
+
+func getExample(examples []string) string {
+	if len(examples) < 1 {
+		return ""
+	}
+	return examples[0]
+}
+
+func getPage(word string, nc *notionapi.Client) (*notionapi.DatabaseQueryResponse, error) {
+	sr := &notionapi.DatabaseQueryRequest{
+		PropertyFilter: &notionapi.PropertyFilter{
+			Property: "Name",
+			RichText: &notionapi.TextFilterCondition{
+				Equals: word,
+			},
+		},
+	}
+	return nc.Database.Query(
+		context.Background(), notionapi.DatabaseID(os.Getenv("NOTION_DATABASE_ID")), sr)
+}
+
 
 func init() {
 	rootCmd.AddCommand(addCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// addCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// addCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

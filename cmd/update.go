@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	"engvocabtool/notion"
+	"context"
 	"engvocabtool/words"
 	"fmt"
-	"strconv"
+	"os"
 
+	"github.com/jomei/notionapi"
 	"github.com/spf13/cobra"
 )
 
@@ -17,8 +18,6 @@ var updateCmd = &cobra.Command{
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return update(args)
 		},
-		SilenceErrors: true,
-		SilenceUsage: true,
 }
 
 func update(args []string) error {
@@ -33,109 +32,69 @@ func update(args []string) error {
 		word = args[0]
 	}
 
-	nc := notion.NewClient()
-	if !nc.Exist(word) {
+	nc := notionapi.NewClient(notionapi.Token(os.Getenv("NOTION_INTEGRATION_TOKEN")))
+	page, err := getPage(word, nc)
+	if err != nil {
+		return err
+	}
+	if len(page.Results) == 0 {
 		return fmt.Errorf("input word does not exist")
 	}
 
-	sr, err := notion.NewClient().GetPageByName(word)
-	if err != nil {
-		return err
-	}
-
 	wc := words.NewClient()
-	ar, err := wc.GetEverything(word)
+	wres, err := wc.GetEverything(word)
 	if err != nil {
 		return err
 	}
 
-	index, err := showSelectPrompt(ar)
+	index, err := showSelectPrompt(wres)
 	if err != nil {
 		return err
 	}
 
-	json := createJsonForUpdate(index, ar)
-	up, err := nc.UpdatePage(sr.Results[0].ID, json)
+	pur := createPageUpdateRequest(wres, index)
+	up, err := nc.Page.Update(context.Background(), notionapi.PageID(page.Results[0].ID), pur)
 	if err != nil {
 		return err
 	}
+
 	fmt.Println(up.URL)
 	return nil
 }
 
-func createJsonForUpdate(index int, res *words.Response) string {
-	frequency := strconv.FormatFloat(res.Frequency, 'f', -1, 64)
-	examples := res.Results[index].Examples
-	synonyms := res.Results[index].Synonyms
-	meaning := res.Results[index].Definition
-	class := partOfSpeechToClass[res.Results[index].PartOfSpeech]
+func createPageUpdateRequest(wres *words.Response, index int) *notionapi.PageUpdateRequest {
+	example := getExample(wres.Results[index].Examples)
+	synonym := getSynonum(wres.Results[index].Synonyms)
 
-	if class == "" {
-		class = "Unknown"
+	pur := &notionapi.PageUpdateRequest{
+		Properties: notionapi.Properties{
+			"Class": notionapi.SelectProperty{
+				Select: notionapi.Option{
+					Name: partOfSpeechToClass[wres.Results[index].PartOfSpeech],
+				},
+			},
+			"Frequency": notionapi.NumberProperty{
+				Number: wres.Frequency,
+			},
+			"Meaning": notionapi.RichTextProperty{
+				RichText: []notionapi.RichText{
+					{Text: notionapi.Text{Content: wres.Results[index].Definition}},
+				},
+			},
+			"Sentence": notionapi.RichTextProperty{
+				RichText: []notionapi.RichText{
+					{Text: notionapi.Text{Content: example}},
+				},
+			},
+			"Synonyms": notionapi.RichTextProperty{
+				RichText: []notionapi.RichText{
+					{Text: notionapi.Text{Content: synonym}},
+				},
+			},
+		},
 	}
-
-	var example string
-	if len(examples) < 1 {
-		example = ""
-	} else {
-		example = examples[0]
-	}
-
-	var synonym string
-	if len(synonyms) < 1 {
-		synonym = ""
-	} else {
-		for i, s := range synonyms {
-			if i == 0 {
-				synonym = s
-			} else {
-				synonym = synonym + ", " + s
-			}
-		}
-	}
-
-	json := `{
-		"properties": {
-			"Class": {
-				"select": {
-					"name": "` + class + `"
-				}
-			},
-			"Frequency": {
-				"number": ` + frequency + `
-			},
-			"Meaning": {
-				"rich_text": [
-					{
-						"text": {
-							"content": "` + meaning + `"
-						}
-					}
-				]
-			},
-			"Sentence": {
-				"rich_text": [
-					{
-						"text": {
-							"content": "` + example + `" 
-						}
-					}
-				]
-			},
-			"Synonyms": {
-				"rich_text": [
-					{
-						"text": {
-							"content": "` + synonym + `" 
-						}
-					}
-				]
-			}
-		} 
-	}`
-	return json
+	return pur
 }
-
 
 func init() {
 	rootCmd.AddCommand(updateCmd)
