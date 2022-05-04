@@ -52,18 +52,17 @@ func add(args []string) error {
 		return fmt.Errorf("input word alredy exists")
 	}
 
-	wc := words.NewClient()
-	wres, err := wc.GetEverything(word)
+	wdef, err := getWordDefinition(word)
 	if err != nil {
 		return err
 	}
 
-	index, err := showSelectPrompt(wres)
+	index, err := showSelectPrompt(wdef)
 	if err != nil {
 		return err
 	}
 
-	pcr := createPageCreateRequest(wres, index)
+	pcr := getPageCreateRequest(wdef, index)
 	np, err := nc.Page.Create(context.Background(), pcr)
 	if err != nil {
 		return err
@@ -72,9 +71,9 @@ func add(args []string) error {
 	return nil
 }
 
-func createPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreateRequest {
+func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreateRequest {
 	example := getExample(wres.Results[index].Examples)
-	synonym := getSynonum(wres.Results[index].Synonyms)
+	synonym := getSynonym(wres.Results[index].Synonyms)
 
 	dateObj := notionapi.Date(time.Now())
 	pcr := &notionapi.PageCreateRequest{
@@ -131,40 +130,7 @@ func createPageCreateRequest(wres *words.Response, index int) *notionapi.PageCre
 	return pcr
 }
 
-func getSynonum(synonyms []string) string {
-	if len(synonyms) < 1 {
-		return ""
-	}
-	var synonym string
-	for i, s := range synonyms {
-		if i == 0 {
-			synonym = s
-		} else {
-			synonym = synonym + ", " + s
-		}
-	}
-	return synonym
-}
 
-func getExample(examples []string) string {
-	if len(examples) < 1 {
-		return ""
-	}
-	return examples[0]
-}
-
-func getPage(word string, nc *notionapi.Client) (*notionapi.DatabaseQueryResponse, error) {
-	sr := &notionapi.DatabaseQueryRequest{
-		PropertyFilter: &notionapi.PropertyFilter{
-			Property: "Name",
-			RichText: &notionapi.TextFilterCondition{
-				Equals: word,
-			},
-		},
-	}
-	return nc.Database.Query(
-		context.Background(), notionapi.DatabaseID(os.Getenv("NOTION_DATABASE_ID")), sr)
-}
 
 
 func init() {

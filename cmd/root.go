@@ -57,3 +57,34 @@ func showSelectPrompt(res *words.Response) (int, error) {
 	index, _, err := prompt.Run()
 	return index, err
 }
+
+func getWordDefinition(word string) (*words.Response, error) {
+	wc := words.NewClient()
+	wres, err := wc.GetEverything(word)
+	if err != nil {
+		return nil, err
+	}
+	return wres, nil
+}
+
+func getSynonym(synonyms []string) string {
+	if len(synonyms) < 1 {
+		return ""
+	}
+	var synonym string
+	for i, s := range synonyms {
+		if i == 0 {
+			synonym = s
+		} else {
+			synonym = synonym + ", " + s
+		}
+	}
+	return synonym
+}
+
+func getExample(examples []string) string {
+	if len(examples) < 1 {
+		return ""
+	}
+	return examples[0]
+}

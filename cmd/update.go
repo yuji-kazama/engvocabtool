@@ -43,18 +43,17 @@ func update(args []string) error {
 		return fmt.Errorf("input word does not exist")
 	}
 
-	wc := words.NewClient()
-	wres, err := wc.GetEverything(word)
+	wdef, err := getWordDefinition(word)
 	if err != nil {
 		return err
 	}
 
-	index, err := showSelectPrompt(wres)
+	index, err := showSelectPrompt(wdef)
 	if err != nil {
 		return err
 	}
 
-	pur := createPageUpdateRequest(wres, index)
+	pur := getPageUpdateRequest(wdef, index)
 	up, err := nc.Page.Update(context.Background(), notionapi.PageID(page.Results[0].ID), pur)
 	if err != nil {
 		return err
@@ -64,9 +63,24 @@ func update(args []string) error {
 	return nil
 }
 
-func createPageUpdateRequest(wres *words.Response, index int) *notionapi.PageUpdateRequest {
+
+
+func getPage(word string, nc *notionapi.Client) (*notionapi.DatabaseQueryResponse, error) {
+	sr := &notionapi.DatabaseQueryRequest{
+		PropertyFilter: &notionapi.PropertyFilter{
+			Property: "Name",
+			RichText: &notionapi.TextFilterCondition{
+				Equals: word,
+			},
+		},
+	}
+	return nc.Database.Query(
+		context.Background(), notionapi.DatabaseID(os.Getenv("NOTION_DATABASE_ID")), sr)
+}
+
+func getPageUpdateRequest(wres *words.Response, index int) *notionapi.PageUpdateRequest {
 	example := getExample(wres.Results[index].Examples)
-	synonym := getSynonum(wres.Results[index].Synonyms)
+	synonym := getSynonym(wres.Results[index].Synonyms)
 
 	pur := &notionapi.PageUpdateRequest{
 		Properties: notionapi.Properties{
