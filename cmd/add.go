@@ -17,13 +17,13 @@ var addCmd = &cobra.Command{
 		Long:  `Add a word to Notion database. The information of the word such as meanings, synonyms, examples and etc is gotten from WordsAPI.`,
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return add(args)
+			return add(cmd, args)
 		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
 }
 
-func add(args []string) error {
+func add(cmd *cobra.Command, args []string) error {
 	var word string
 	var err error
 	if len(args) == 0 {
@@ -44,20 +44,34 @@ func add(args []string) error {
 		return fmt.Errorf("input word alredy exists")
 	}
 
-	wdef, err := getWordDefinition(word)
+	force, err := cmd.Flags().GetBool("force")
 	if err != nil {
-		return err
+		return nil
 	}
 
-	index, err := showSelectPrompt(wdef)
-	if err != nil {
-		return err
-	}
+	var np *notionapi.Page
+	if !force {
+		wdef, err := getWordDefinition(word)
+		if err != nil {
+			return err
+		}
 
-	pcr := getPageCreateRequest(wdef, index)
-	np, err := nc.Page.Create(context.Background(), pcr)
-	if err != nil {
-		return err
+		index, err := showSelectPrompt(wdef)
+		if err != nil {
+			return err
+		}
+
+		pcr := getPageCreateRequest(wdef, index)
+		np, err = nc.Page.Create(context.Background(), pcr)
+		if err != nil {
+			return err
+		}
+	} else{
+		pcr := getPageCreateRequestForForce(word)
+		np, err = nc.Page.Create(context.Background(), pcr)
+		if err != nil {
+			return err
+		}
 	}
 	fmt.Println(np.URL)
 	return nil
@@ -122,6 +136,40 @@ func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreate
 	return pcr
 }
 
+func getPageCreateRequestForForce(word string) *notionapi.PageCreateRequest {
+
+	dateObj := notionapi.Date(time.Now())
+	pcr := &notionapi.PageCreateRequest{
+		Parent: notionapi.Parent{
+			Type:       notionapi.ParentTypeDatabaseID,
+			DatabaseID: notionapi.DatabaseID(os.Getenv("NOTION_DATABASE_ID")),
+		},
+		Properties: notionapi.Properties{
+			"Name": notionapi.TitleProperty{
+				Title: []notionapi.RichText{
+					{Text: notionapi.Text{Content: word}},
+				},
+			},
+			"Status": notionapi.SelectProperty{
+				Select: notionapi.Option{
+					Name: "1: New",
+				},
+			},
+			"Check Num": notionapi.SelectProperty{
+				Select: notionapi.Option{
+					Name: "1",
+				},
+			},
+			"Study Date": notionapi.DateProperty{
+				Date: notionapi.DateObject{
+					Start: &dateObj,
+				},
+			},
+		},
+	}
+	return pcr
+}
 func init() {
 	rootCmd.AddCommand(addCmd)
+	addCmd.Flags().BoolP("force", "f", false, "force to add")
 }
