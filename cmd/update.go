@@ -18,6 +18,8 @@ var updateCmd = &cobra.Command{
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return update(args)
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 }
 
 func update(args []string) error {

@@ -48,7 +48,7 @@ func add(args []string) error {
 	if err != nil {
 		return err
 	}
-	if len(page.Results) > 1 {
+	if len(page.Results) > 0 {
 		return fmt.Errorf("input word alredy exists")
 	}
 
