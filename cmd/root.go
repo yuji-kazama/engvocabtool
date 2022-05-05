@@ -82,6 +82,29 @@ func getSynonym(synonyms []string) string {
 	return synonym
 }
 
+func getPronunciation(wres *words.Response, index int) string {
+	var pronunciation string
+	if wres.Pronunciation.All != "" {
+		pronunciation = wres.Pronunciation.All
+	} else {
+		switch wres.Results[index].PartOfSpeech {
+		case "noun":
+			pronunciation = wres.Pronunciation.Noun
+		case "verb":
+			pronunciation = wres.Pronunciation.Verb
+		case "adjective":
+			pronunciation = wres.Pronunciation.Adjective
+		case "adverb":
+			pronunciation = wres.Pronunciation.Adverb
+		case "conjunction":
+			pronunciation = wres.Pronunciation.Conjunction
+		default:
+			pronunciation = wres.Pronunciation.All
+		}
+	}
+	return pronunciation
+}
+
 func getExample(examples []string) string {
 	if len(examples) < 1 {
 		return ""

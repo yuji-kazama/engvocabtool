@@ -81,6 +81,7 @@ func getPage(word string, nc *notionapi.Client) (*notionapi.DatabaseQueryRespons
 func getPageUpdateRequest(wres *words.Response, index int) *notionapi.PageUpdateRequest {
 	example := getExample(wres.Results[index].Examples)
 	synonym := getSynonym(wres.Results[index].Synonyms)
+	pronunciation := getPronunciation(wres, index)
 
 	pur := &notionapi.PageUpdateRequest{
 		Properties: notionapi.Properties{
@@ -105,6 +106,11 @@ func getPageUpdateRequest(wres *words.Response, index int) *notionapi.PageUpdate
 			"Synonyms": notionapi.RichTextProperty{
 				RichText: []notionapi.RichText{
 					{Text: notionapi.Text{Content: synonym}},
+				},
+			},
+			"Pronunciation": notionapi.RichTextProperty{
+				RichText: []notionapi.RichText{
+					{Text: notionapi.Text{Content: pronunciation}},
 				},
 			},
 		},

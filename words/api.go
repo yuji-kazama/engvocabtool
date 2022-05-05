@@ -20,6 +20,7 @@ type Response struct {
 	Word    string `json:"word"`
 	Results []Result `json:"results"`
 	Frequency float64 `json:"frequency"`
+	Pronunciation Pronunciation `json:"pronunciation"`
 }
 
 type Result struct {
@@ -27,6 +28,15 @@ type Result struct {
 	PartOfSpeech string   `json:"partOfSpeech"`
 	Synonyms     []string `json:"synonyms,omitempty"`
 	Examples     []string `json:"examples,omitempty"`
+}
+
+type Pronunciation struct {
+	All string `json:"all,omitempty"`
+	Noun string `json:"noun,omitempty"`
+	Verb string `json:"verb,omitempty"`
+	Adjective string `json:"adjective,omitempty"`
+	Adverb string `json:"adverb,omitempty"`
+	Conjunction string `json:"conjunction,omitempty"`
 }
 
 func NewClient(opts ...ClientOption) (*Client) {

@@ -70,10 +70,13 @@ func TestClient_GetEverythingWithMock(t *testing.T) {
 					},
 				},
 				Frequency: 4.34,
+				Pronunciation: Pronunciation {
+					All: "'æpəl",
+				},
 			},
 			wantErr: false, 
 			filePath: "testdata/getEverything.json",
-			statusCode: 200,
+			statusCode: http.StatusOK,
 		},
 	}
 	for _, tt := range tests {

@@ -80,6 +80,7 @@ func add(cmd *cobra.Command, args []string) error {
 func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreateRequest {
 	example := getExample(wres.Results[index].Examples)
 	synonym := getSynonym(wres.Results[index].Synonyms)
+	pronunciation := getPronunciation(wres, index)
 
 	dateObj := notionapi.Date(time.Now())
 	pcr := &notionapi.PageCreateRequest{
@@ -131,10 +132,17 @@ func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreate
 					{Text: notionapi.Text{Content: synonym}},
 				},
 			},
+			"Pronunciation": notionapi.RichTextProperty{
+				RichText: []notionapi.RichText{
+					{Text: notionapi.Text{Content: pronunciation}},
+				},
+			},
 		},
 	}
 	return pcr
 }
+
+
 
 func getPageCreateRequestForForce(word string) *notionapi.PageCreateRequest {
 
