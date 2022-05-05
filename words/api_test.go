@@ -129,7 +129,7 @@ func TestClient_GetEverything(t *testing.T) {
 				word: "awhoefiuawef",
 			},
 			wantErr: true, 
-			err: fmt.Errorf("error code: 404"),
+			err: fmt.Errorf("error code 404: your request is invalid"),
 		},
 	}
 	for _, tt := range tests {

@@ -1,15 +1,12 @@
 package words
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 )
 const (
 	apiURL = "https://wordsapiv1.p.rapidapi.com"
@@ -72,22 +69,13 @@ func WithHttpClient(client *http.Client) ClientOption {
 	}
 }
 
-func (c *Client) request(ctx context.Context, method string, urlStr string, requestBody interface{}) (*http.Response, error) {
+func (c *Client) request(ctx context.Context, method string, urlStr string) (*http.Response, error) {
 	u, err := c.baseUrl.Parse(urlStr)
 	if err != nil {
 		return nil, err
 	}
 
-	var buf io.ReadWriter
-	if requestBody != nil && !reflect.ValueOf(requestBody).IsNil() {
-		body, err := json.Marshal(requestBody)
-		if err != nil {
-			return nil, err
-		}
-		buf = bytes.NewBuffer(body)
-	}
-
-	req, err := http.NewRequest(method, u.String(), buf)
+	req, err := http.NewRequest(method, u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +89,24 @@ func (c *Client) request(ctx context.Context, method string, urlStr string, requ
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error code: %v", res.StatusCode)
+		var error error
+		switch res.StatusCode {
+		case http.StatusBadRequest:
+			error = fmt.Errorf("error code %v: your request is invalid", res.StatusCode)
+		case http.StatusUnauthorized:
+			error = fmt.Errorf("error code %v: your API key is wrong", res.StatusCode)
+		case http.StatusNotFound:
+			error = fmt.Errorf("error code %v: no matching word was found", res.StatusCode)
+		case http.StatusInternalServerError:
+			error = fmt.Errorf("error code %v: It had a problem with server, try again later", res.StatusCode)
+		}
+		return nil, error
 	}
 	return res, nil
 }
 
 func (c *Client) GetEverything(ctx context.Context, word string) (*Response, error) {
-	res, err := c.request(ctx, http.MethodGet, fmt.Sprintf("/words/%s", word), nil)
+	res, err := c.request(ctx, http.MethodGet, fmt.Sprintf("/words/%s", word))
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +118,6 @@ func (c *Client) GetEverything(ctx context.Context, word string) (*Response, err
 	}()
 
 	var response Response
-
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
 		return nil, err
