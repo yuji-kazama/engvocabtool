@@ -1,6 +1,8 @@
 package words
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -84,7 +86,7 @@ func TestClient_GetEverythingWithMock(t *testing.T) {
 			c := newMockedClient(t, tt.filePath, tt.statusCode)
 			client := NewClient(WithHttpClient(c))
 
-			got, err := client.GetEverything(tt.args.word)
+			got, err := client.GetEverything(context.Background(), tt.args.word)
 
 			if !tt.wantErr && err != nil{
 				t.Fatalf("unexpected error = %#v", err)
@@ -127,12 +129,13 @@ func TestClient_GetEverything(t *testing.T) {
 				word: "awhoefiuawef",
 			},
 			wantErr: true, 
+			err: fmt.Errorf("error code: 404"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewClient()
-			got, err := c.GetEverything(tt.args.word)
+			client := NewClient()
+			got, err := client.GetEverything(context.Background(), tt.args.word)
 
 			if !tt.wantErr && err != nil{
 				t.Fatalf("unexpected error = %#v", err)

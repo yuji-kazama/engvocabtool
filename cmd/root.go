@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"engvocabtool/words"
 	"fmt"
 	"os"
@@ -60,7 +61,7 @@ func showSelectPrompt(res *words.Response) (int, error) {
 
 func getWordDefinition(word string) (*words.Response, error) {
 	wc := words.NewClient()
-	wres, err := wc.GetEverything(word)
+	wres, err := wc.GetEverything(context.Background(), word)
 	if err != nil {
 		return nil, err
 	}

@@ -1,19 +1,27 @@
 package words
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
+	"reflect"
+)
+const (
+	apiURL = "https://wordsapiv1.p.rapidapi.com"
 )
 
 type ClientOption func(*Client)
 
 type Client struct {
-	baseURL string
+	baseUrl *url.URL
 	httpClient *http.Client
+	xRapidApiHost string
+	xRapidApiKey string
 }
 
 type Response struct {
@@ -40,8 +48,16 @@ type Pronunciation struct {
 }
 
 func NewClient(opts ...ClientOption) (*Client) {
-	c := new(Client)
-	c.baseURL = "https://wordsapiv1.p.rapidapi.com/words/"
+	u, err := url.Parse(apiURL)
+	if err != nil {
+		panic(err)
+	}
+	c := &Client{
+		httpClient: http.DefaultClient,
+		baseUrl: u,
+		xRapidApiHost: os.Getenv("WORDS_XRAPIDAPI_HOST"),
+		xRapidApiKey: os.Getenv("WORDS_XRAPIDAPI_KEY"),
+	}
 	c.httpClient = new(http.Client)
 
 	for _, opt := range opts {
@@ -56,45 +72,57 @@ func WithHttpClient(client *http.Client) ClientOption {
 	}
 }
 
-func (c *Client) newRequest(method, spath string, body io.Reader) (*http.Request, error) {
-	url := c.baseURL + spath
-	req, err := http.NewRequest(method, url, body)
+func (c *Client) request(ctx context.Context, method string, urlStr string, requestBody interface{}) (*http.Response, error) {
+	u, err := c.baseUrl.Parse(urlStr)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-RapidAPI-Host", os.Getenv("WORDS_XRAPIDAPI_HOST"))
-	req.Header.Set("X-RapidAPI-Key", os.Getenv("WORDS_XRAPIDAPI_KEY"))
-	return req, nil
+
+	var buf io.ReadWriter
+	if requestBody != nil && !reflect.ValueOf(requestBody).IsNil() {
+		body, err := json.Marshal(requestBody)
+		if err != nil {
+			return nil, err
+		}
+		buf = bytes.NewBuffer(body)
+	}
+
+	req, err := http.NewRequest(method, u.String(), buf)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("X-RapidAPI-Host", c.xRapidApiHost)
+	req.Header.Set("X-RapidAPI-Key", c.xRapidApiKey)
+
+	res, err := c.httpClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error code: %v", res.StatusCode)
+	}
+	return res, nil
 }
 
-func (c *Client) GetEverything(word string) (*Response, error) {
-	req, err := c.newRequest(http.MethodGet, word, nil)
+func (c *Client) GetEverything(ctx context.Context, word string) (*Response, error) {
+	res, err := c.request(ctx, http.MethodGet, fmt.Sprintf("/words/%s", word), nil)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := c.httpClient.Do(req)
+	defer func() {
+		if errClose := res.Body.Close(); errClose != nil {
+			fmt.Println("failed to close body, should never happen")
+		}
+	}()
+
+	var response Response
+
+	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode == 404 {
-		return nil, fmt.Errorf("no matching word was found")
-	}
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("request error: %v", res)
-	}
-	defer res.Body.Close()
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		fmt.Printf("read error: %v", err)
-		return nil, err
-	}
-
-	var result Response
-	if err := json.Unmarshal(body, &result); err != nil {
-		fmt.Printf("cannot unmarshal json: %v", err)
-		return nil, err
-	}
-	return &result, nil
+	return &response, nil
 }

@@ -63,8 +63,6 @@ func update(args []string) error {
 	return nil
 }
 
-
-
 func getPage(word string, nc *notionapi.Client) (*notionapi.DatabaseQueryResponse, error) {
 	sr := &notionapi.DatabaseQueryRequest{
 		PropertyFilter: &notionapi.PropertyFilter{
