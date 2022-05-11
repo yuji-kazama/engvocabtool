@@ -124,6 +124,16 @@ func TestClient_GetEverything(t *testing.T) {
 			wantErr: false, 
 		},
 		{
+			name: "pronunciation-unmarshal",
+			args: args {
+				word: "entrenched",
+			},
+			want: Response{
+				Word: "entrenched",
+			},
+			wantErr: false, 
+		},
+		{
 			name: "unknown",
 			args: args {
 				word: "awhoefiuawef",
@@ -131,6 +141,7 @@ func TestClient_GetEverything(t *testing.T) {
 			wantErr: true, 
 			err: fmt.Errorf("error code 404: your request is invalid"),
 		},
+		
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

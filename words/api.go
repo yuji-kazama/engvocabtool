@@ -44,6 +44,35 @@ type Pronunciation struct {
 	Conjunction string `json:"conjunction,omitempty"`
 }
 
+func (p *Pronunciation) UnmarshalJSON(data []byte) error {
+
+	var raw map[string]string
+	if err := json.Unmarshal(data, &raw); err != nil {
+		p.All = string(data)
+	} else {
+		for k, v := range raw {
+			switch k {
+			case "all":
+				p.All = v
+			case "noun":
+				p.Noun = v
+			case "verb":
+				p.Verb = v
+			case "adjective":
+				p.Adjective = v
+			case "adverb":
+				p.Adverb = v
+			case "conjunction":
+				p.Conjunction = v
+			default:
+				p.All = v
+			}
+		}
+	}
+	return nil
+}
+
+
 func NewClient(opts ...ClientOption) (*Client) {
 	u, err := url.Parse(apiURL)
 	if err != nil {
