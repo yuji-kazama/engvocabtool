@@ -111,7 +111,7 @@ func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreate
 			},
 			"Class": notionapi.SelectProperty{
 				Select: notionapi.Option{
-					Name: wres.Results[index].PartOfSpeech,
+					Name: getPartOfSpeech(wres.Results[index].PartOfSpeech),
 				},
 			},
 			"Frequency": notionapi.NumberProperty{
@@ -142,6 +142,12 @@ func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreate
 	return pcr
 }
 
+func getPartOfSpeech(partOfSpeech string) string {
+	if partOfSpeech == "" {
+		partOfSpeech = "unknown"
+	}
+	return partOfSpeech
+}
 
 
 func getPageCreateRequestForForce(word string) *notionapi.PageCreateRequest {
