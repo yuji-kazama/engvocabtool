@@ -137,6 +137,9 @@ func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreate
 					{Text: notionapi.Text{Content: pronunciation}},
 				},
 			},
+			"No Image": notionapi.CheckboxProperty{
+				Checkbox: true,
+			},
 		},
 	}
 	return pcr
@@ -178,6 +181,9 @@ func getPageCreateRequestForForce(word string) *notionapi.PageCreateRequest {
 				Date: notionapi.DateObject{
 					Start: &dateObj,
 				},
+			},
+			"No Image": notionapi.CheckboxProperty{
+				Checkbox: true,
 			},
 		},
 	}
