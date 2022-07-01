@@ -140,6 +140,9 @@ func getPageCreateRequest(wres *words.Response, index int) *notionapi.PageCreate
 			"No Image": notionapi.CheckboxProperty{
 				Checkbox: true,
 			},
+			"Image Search URL": notionapi.URLProperty{
+				URL: "https://www.google.com/search?tbm=isch&q=" + wres.Word + "+meaning",
+			},
 		},
 	}
 	return pcr

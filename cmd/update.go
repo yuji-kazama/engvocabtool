@@ -111,6 +111,9 @@ func getPageUpdateRequest(wres *words.Response, index int) *notionapi.PageUpdate
 					{Text: notionapi.Text{Content: pronunciation}},
 				},
 			},
+			"Image Search URL": notionapi.URLProperty{
+				URL: "https://www.google.com/search?tbm=isch&q=" + wres.Word + "+meaning",
+			},
 		},
 	}
 	return pur
