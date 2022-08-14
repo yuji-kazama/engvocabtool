@@ -40,6 +40,9 @@ func showSelectPrompt(res *words.Response) (int, error) {
 	for i, s := range res.Results {
 		items = append(items, strconv.Itoa(i+1)+". "+"["+s.PartOfSpeech+"] "+s.Definition)
 	}
+	if len(items) == 0 {
+		return 0, fmt.Errorf("no word definitions")
+	}
 	prompt := promptui.Select{
 		Label: "Select Definition",
 		Items: items,
