@@ -41,6 +41,7 @@ func add(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if len(page.Results) > 0 {
+		fmt.Println(page.Results[0].URL)
 		return fmt.Errorf("input word alredy exists")
 	}
 
