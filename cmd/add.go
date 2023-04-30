@@ -189,6 +189,9 @@ func getPageCreateRequestForForce(word string) *notionapi.PageCreateRequest {
 			"No Image": notionapi.CheckboxProperty{
 				Checkbox: true,
 			},
+			"Image Search URL": notionapi.URLProperty{
+				URL: "https://www.google.com/search?tbm=isch&q=" + word + "+meaning",
+			},
 		},
 	}
 	return pcr
